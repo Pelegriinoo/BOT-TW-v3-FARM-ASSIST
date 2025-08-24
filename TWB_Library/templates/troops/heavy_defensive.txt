@@ -1,0 +1,269 @@
+[
+  {
+    "building": "barracks",
+    "level": 1,
+    "build": {
+      "barracks": {
+        "spear": 50,
+        "sword": 20
+      }
+    },
+    "farm": {
+      "spear": 30
+    }
+  },
+  {
+    "building": "barracks",
+    "level": 3,
+    "upgrades": {
+        "spear": 1,
+        "sword": 1
+    },
+    "build": {
+      "barracks": {
+        "spear": 150,
+        "sword": 80
+      }
+    },
+    "farm": {
+      "spear": 40
+    }
+  },
+  {
+    "building": "smith",
+    "level": 3,
+    "upgrades": {
+        "spear": 2,
+        "sword": 2
+    },
+    "build": {
+      "barracks": {
+        "spear": 300,
+        "sword": 200
+      }
+    },
+    "farm": {
+      "spear": 50
+    }
+  },
+  {
+    "building": "stable",
+    "level": 1,
+    "upgrades": {
+        "spear": 3,
+        "sword": 3
+    },
+    "build": {
+      "barracks": {
+        "spear": 500,
+        "sword": 350
+      }
+    },
+    "farm": {
+      "spear": 60
+    }
+  },
+  {
+    "building": "stable",
+    "level": 3,
+    "upgrades": {
+        "spear": 4,
+        "sword": 4
+    },
+    "build": {
+      "barracks": {
+        "spear": 700,
+        "sword": 500
+      }
+    },
+    "farm": {
+      "spear": 80
+    }
+  },
+  {
+    "building": "barracks",
+    "level": 7,
+    "upgrades": {
+        "spear": 5,
+        "sword": 5
+    },
+    "build": {
+      "barracks": {
+        "spear": 1000,
+        "sword": 800
+      }
+    },
+    "farm": {
+      "spear": 100
+    }
+  },
+  {
+    "building": "stable",
+    "level": 6,
+    "upgrades": {
+        "spear": 6,
+        "sword": 6
+    },
+    "build": {
+      "barracks": {
+        "spear": 1300,
+        "sword": 1100
+      }
+    },
+    "farm": {
+      "spear": 120
+    }
+  },
+  {
+    "building": "barracks",
+    "level": 10,
+    "upgrades": {
+        "spear": 7,
+        "sword": 7
+    },
+    "build": {
+      "barracks": {
+        "spear": 1600,
+        "sword": 1400
+      }
+    },
+    "farm": {
+      "spear": 150
+    }
+  },
+  {
+    "building": "barracks",
+    "level": 12,
+    "upgrades": {
+        "spear": 8,
+        "sword": 8
+    },
+    "build": {
+      "barracks": {
+        "spear": 1900,
+        "sword": 1700
+      }
+    },
+    "farm": {
+      "spear": 180
+    }
+  },
+  {
+    "building": "stable",
+    "level": 15,
+    "upgrades": {
+        "spear": 9,
+        "sword": 9,
+        "heavy": 1
+    },
+    "build": {
+      "barracks": {
+        "spear": 2200,
+        "sword": 2000
+      },
+      "stable": {
+        "heavy": 100
+      }
+    },
+    "farm": {
+      "spear": 200
+    }
+  },
+  {
+    "building": "stable",
+    "level": 17,
+    "upgrades": {
+        "spear": 10,
+        "sword": 10,
+        "heavy": 3
+    },
+    "build": {
+      "barracks": {
+        "spear": 2500,
+        "sword": 2300
+      },
+      "stable": {
+        "heavy": 400
+      }
+    },
+    "farm": {
+      "spear": 220
+    }
+  },
+  {
+    "building": "barracks",
+    "level": 15,
+    "upgrades": {
+        "heavy": 5
+    },
+    "build": {
+      "barracks": {
+        "spear": 2700,
+        "sword": 2600
+      },
+      "stable": {
+        "heavy": 800
+      }
+    },
+    "farm": {
+      "spear": 250
+    }
+  },
+  {
+    "building": "barracks",
+    "level": 18,
+    "upgrades": {
+        "heavy": 7
+    },
+    "build": {
+      "barracks": {
+        "spear": 2850,
+        "sword": 2800
+      },
+      "stable": {
+        "heavy": 1500
+      }
+    },
+    "farm": {
+      "spear": 280
+    }
+  },
+  {
+    "building": "barracks",
+    "level": 20,
+    "upgrades": {
+        "heavy": 9
+    },
+    "build": {
+      "barracks": {
+        "spear": 2950,
+        "sword": 2900
+      },
+      "stable": {
+        "heavy": 2200
+      }
+    },
+    "farm": {
+      "spear": 300
+    }
+  },
+  {
+    "building": "barracks",
+    "level": 25,
+    "upgrades": {
+        "heavy": 10
+    },
+    "build": {
+      "barracks": {
+        "spear": 3000,
+        "sword": 3000
+      },
+      "stable": {
+        "heavy": 2800
+      }
+    },
+    "farm": {
+      "spear": 350
+    }
+  }
+]

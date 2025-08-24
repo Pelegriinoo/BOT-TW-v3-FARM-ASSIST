@@ -1,0 +1,15 @@
+# Dependências originais do TWB
+requests
+coloredlogs
+psutil
+flask
+pyquery
+beautifulsoup4
+python-telegram-bot
+selenium
+
+# Novas dependências para monitoramento de crescimento
+matplotlib
+pandas
+numpy
+schedule

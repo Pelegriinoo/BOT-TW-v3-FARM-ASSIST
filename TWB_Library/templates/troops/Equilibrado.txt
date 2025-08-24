@@ -1,0 +1,268 @@
+[
+  {
+    "building": "barracks",
+    "level": 1,
+    "build": {
+      "barracks": {
+        "spear": 30,
+        "sword": 10
+      }
+    },
+    "farm": {
+      "spear": 20,
+      "sword": 10
+    }
+  },
+  {
+    "building": "barracks",
+    "level": 3,
+    "upgrades": {
+        "spear": 1,
+        "sword": 1
+    },
+    "build": {
+      "barracks": {
+        "spear": 80,
+        "sword": 40
+      }
+    },
+    "farm": {
+      "spear": 25,
+      "sword": 15
+    }
+  },
+  {
+    "building": "smith",
+    "level": 3,
+    "upgrades": {
+        "spear": 2,
+        "sword": 2,
+        "spy": 1
+    },
+    "build": {
+      "barracks": {
+        "spear": 150,
+        "sword": 80
+      }
+    },
+    "farm": {
+      "spear": 30,
+      "sword": 20,
+      "spy": 1
+    }
+  },
+  {
+    "building": "stable",
+    "level": 1,
+    "upgrades": {
+        "spy": 2,
+        "light": 1
+    },
+    "build": {
+      "barracks": {
+        "spear": 250,
+        "sword": 120
+      },
+      "stable": {
+        "spy": 20
+      }
+    },
+    "farm": {
+      "spear": 35,
+      "sword": 25,
+      "spy": 1
+    }
+  },
+  {
+    "building": "stable",
+    "level": 3,
+    "upgrades": {
+        "spy": 3,
+        "light": 2,
+        "spear": 3,
+        "sword": 3
+    },
+    "build": {
+      "barracks": {
+        "spear": 400,
+        "sword": 200
+      },
+      "stable": {
+        "spy": 50,
+        "light": 100
+      }
+    },
+    "farm": [
+        {"light": 10, "spy": 1},
+        {"spear": 20, "sword": 10}
+    ]
+  },
+  {
+    "building": "barracks",
+    "level": 8,
+    "upgrades": {
+        "spy": 4,
+        "light": 3,
+        "spear": 4,
+        "sword": 4
+    },
+    "build": {
+      "barracks": {
+        "spear": 800,
+        "sword": 500
+      },
+      "stable": {
+        "spy": 100,
+        "light": 300
+      }
+    },
+    "farm": [
+        {"light": 10, "spy": 1},
+        {"spear": 20, "sword": 10}
+    ]
+  },
+  {
+    "building": "stable",
+    "level": 6,
+    "upgrades": {
+        "spy": 5,
+        "light": 4,
+        "spear": 5,
+        "sword": 5
+    },
+    "build": {
+      "barracks": {
+        "spear": 1500,
+        "sword": 1000
+      },
+      "stable": {
+        "spy": 180,
+        "light": 600
+      }
+    },
+    "farm": [
+        {"light": 10, "spy": 1},
+        {"spear": 20, "sword": 10}
+    ]
+  },
+  {
+    "building": "barracks",
+    "level": 12,
+    "upgrades": {
+        "spy": 6,
+        "light": 5,
+        "spear": 6,
+        "sword": 6
+    },
+    "build": {
+      "barracks": {
+        "spear": 2500,
+        "sword": 1800
+      },
+      "stable": {
+        "spy": 250,
+        "light": 1200
+      }
+    },
+    "farm": [
+        {"light": 10, "spy": 1},
+        {"spear": 20, "sword": 10}
+    ]
+  },
+  {
+    "building": "barracks",
+    "level": 15,
+    "upgrades": {
+        "spy": 7,
+        "light": 6,
+        "spear": 7,
+        "sword": 7
+    },
+    "build": {
+      "barracks": {
+        "spear": 3500,
+        "sword": 2500
+      },
+      "stable": {
+        "spy": 300,
+        "light": 1800
+      }
+    },
+    "farm": [
+        {"light": 10, "spy": 1},
+        {"spear": 20, "sword": 10}
+    ]
+  },
+  {
+    "building": "barracks",
+    "level": 18,
+    "upgrades": {
+        "spy": 8,
+        "light": 7,
+        "spear": 8,
+        "sword": 8
+    },
+    "build": {
+      "barracks": {
+        "spear": 4500,
+        "sword": 3200
+      },
+      "stable": {
+        "spy": 350,
+        "light": 2200
+      }
+    },
+    "farm": [
+        {"light": 10, "spy": 1},
+        {"spear": 20, "sword": 10}
+    ]
+  },
+  {
+    "building": "barracks",
+    "level": 20,
+    "upgrades": {
+        "spy": 9,
+        "light": 8,
+        "spear": 9,
+        "sword": 9
+    },
+    "build": {
+      "barracks": {
+        "spear": 5200,
+        "sword": 3800
+      },
+      "stable": {
+        "spy": 380,
+        "light": 2400
+      }
+    },
+    "farm": [
+        {"light": 10, "spy": 1},
+        {"spear": 20, "sword": 10}
+    ]
+  },
+  {
+    "building": "barracks",
+    "level": 25,
+    "upgrades": {
+        "spy": 10,
+        "light": 10,
+        "spear": 10,
+        "sword": 10
+    },
+    "build": {
+      "barracks": {
+        "spear": 6000,
+        "sword": 4200
+      },
+      "stable": {
+        "spy": 400,
+        "light": 2500
+      }
+    },
+    "farm": [
+        {"light": 10, "spy": 1},
+        {"spear": 20, "sword": 10}
+    ]
+  }
+]

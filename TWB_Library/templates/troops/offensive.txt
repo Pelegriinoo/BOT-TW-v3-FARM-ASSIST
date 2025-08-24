@@ -1,0 +1,261 @@
+[
+  {
+    "building": "barracks",
+    "level": 1,
+    "build": {
+      "barracks": {
+        "spear": 30
+      }
+    },
+    "farm": [
+      {"light": 10},
+      {"axe": 50}
+    ]
+  },
+  {
+    "building": "barracks",
+    "level": 3,
+    "build": {
+      "barracks": {
+        "spear": 50
+      }
+    },
+    "farm": [
+      {"light": 10},
+      {"axe": 50}
+    ]
+  },
+  {
+    "building": "smith",
+    "level": 3,
+    "upgrades": {
+        "axe": 1
+    },
+    "build": {
+      "barracks": {
+        "axe": 50
+      }
+    },
+    "farm": [
+      {"light": 10},
+      {"axe": 50}
+    ]
+  },
+  {
+    "building": "stable",
+    "level": 1,
+    "upgrades": {
+        "axe": 2,
+        "light": 1,
+        "spy": 1
+    },
+    "build": {
+      "barracks": {
+        "axe": 150
+      },
+      "stable": {
+        "spy": 10
+      }
+    },
+    "farm": [
+      {"light": 10},
+      {"axe": 50}
+    ]
+  },
+  {
+    "building": "stable",
+    "level": 3,
+    "upgrades": {
+        "axe": 3,
+        "light": 2,
+        "spy": 2
+    },
+    "build": {
+      "barracks": {
+        "axe": 300
+      },
+      "stable": {
+        "spy": 20,
+        "light": 100
+      }
+    },
+    "farm": [
+      {"light": 10},
+      {"axe": 50}
+    ]
+  },
+  {
+    "building": "barracks",
+    "level": 7,
+    "upgrades": {
+        "axe": 4,
+        "light": 3,
+        "spy": 3
+    },
+    "build": {
+      "barracks": {
+        "axe": 600
+      },
+      "stable": {
+        "spy": 30,
+        "light": 250
+      }
+    },
+    "farm": [
+      {"light": 10},
+      {"axe": 50}
+    ]
+  },
+  {
+    "building": "stable",
+    "level": 6,
+    "upgrades": {
+        "axe": 5,
+        "light": 4,
+        "spy": 4
+    },
+    "build": {
+      "barracks": {
+        "axe": 1200
+      },
+      "stable": {
+        "spy": 50,
+        "light": 600
+      }
+    },
+    "farm": [
+      {"light": 10},
+      {"axe": 50}
+    ]
+  },
+  {
+    "building": "barracks",
+    "level": 10,
+    "upgrades": {
+        "axe": 6,
+        "light": 5,
+        "spy": 5,
+        "ram": 1
+    },
+    "build": {
+      "barracks": {
+        "axe": 2000
+      },
+      "stable": {
+        "spy": 80,
+        "light": 1000
+      },
+      "garage": {
+        "ram": 50
+      }
+    },
+    "farm": [
+      {"light": 10},
+      {"axe": 50}
+    ]
+  },
+  {
+    "building": "garage",
+    "level": 5,
+    "upgrades": {
+        "axe": 7,
+        "light": 6,
+        "spy": 6,
+        "ram": 3
+    },
+    "build": {
+      "barracks": {
+        "axe": 3200
+      },
+      "stable": {
+        "spy": 120,
+        "light": 1500
+      },
+      "garage": {
+        "ram": 120
+      }
+    },
+    "farm": [
+      {"light": 10},
+      {"axe": 50}
+    ]
+  },
+  {
+    "building": "barracks",
+    "level": 15,
+    "upgrades": {
+        "axe": 8,
+        "light": 7,
+        "spy": 7,
+        "ram": 5
+    },
+    "build": {
+      "barracks": {
+        "axe": 4500
+      },
+      "stable": {
+        "spy": 180,
+        "light": 2200
+      },
+      "garage": {
+        "ram": 220
+      }
+    },
+    "farm": [
+      {"light": 10},
+      {"axe": 50}
+    ]
+  },
+  {
+    "building": "barracks",
+    "level": 20,
+    "upgrades": {
+        "axe": 9,
+        "light": 8,
+        "spy": 8,
+        "ram": 7
+    },
+    "build": {
+      "barracks": {
+        "axe": 5800
+      },
+      "stable": {
+        "spy": 250,
+        "light": 2700
+      },
+      "garage": {
+        "ram": 300
+      }
+    },
+    "farm": [
+      {"light": 10},
+      {"axe": 50}
+    ]
+  },
+  {
+    "building": "barracks",
+    "level": 25,
+    "upgrades": {
+        "axe": 10,
+        "light": 10,
+        "spy": 10,
+        "ram": 10
+    },
+    "build": {
+      "barracks": {
+        "axe": 6300
+      },
+      "stable": {
+        "spy": 300,
+        "light": 3000
+      },
+      "garage": {
+        "ram": 350
+      }
+    },
+    "farm": [
+      {"light": 10},
+      {"axe": 50}
+    ]
+  }
+]

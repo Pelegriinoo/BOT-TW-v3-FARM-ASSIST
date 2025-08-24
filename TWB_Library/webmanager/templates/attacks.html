@@ -1,0 +1,915 @@
+<!--
+TWB Attack Planner - Web Interface for Attack Management
+Created to facilitate visual attack management
+Integrated with existing TWB Hunter system
+-->
+{% extends "main.html" %}
+
+{% block content %}
+<style>
+.attack-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background: #f9f9f9;
+}
+
+.attack-card.scheduled {
+    border-left: 4px solid #28a745;
+}
+
+.attack-card.imminent {
+    border-left: 4px solid #ffc107;
+    background: #fff9e6;
+}
+
+.attack-card.executing {
+    border-left: 4px solid #dc3545;
+    background: #ffe6e6;
+}
+
+.attack-card.completed {
+    border-left: 4px solid #6c757d;
+    background: #f5f5f5;
+}
+
+.time-display {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.troops-display img {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+}
+
+.add-attack-form {
+    background: #e9ecef;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.monitor-section {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-scheduled { background-color: #28a745; }
+.status-imminent { background-color: #ffc107; }
+.status-executing { background-color: #dc3545; }
+.status-completed { background-color: #6c757d; }
+
+.coords-input {
+    display: inline-block;
+    width: 80px;
+}
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <h3>
+            <i class="fas fa-sword"></i> TWB Attack Planner
+            <div class="btn-group float-right">
+                <button class="btn btn-sm btn-success" onclick="scheduleAttacks()">
+                    <i class="fas fa-play"></i> Schedule Attacks
+                </button>
+                <button class="btn btn-sm btn-info" onclick="refreshData()">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+            </div>
+        </h3>
+    </div>
+</div>
+
+<!-- Monitor Section -->
+<div class="monitor-section">
+    <h5><i class="fas fa-eye"></i> Real-time Monitor</h5>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="text-center">
+                <h4 class="text-success" id="scheduled-count">0</h4>
+                <small>Scheduled</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="text-center">
+                <h4 class="text-warning" id="imminent-count">0</h4>
+                <small>Imminent</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="text-center">
+                <h4 class="text-danger" id="executing-count">0</h4>
+                <small>Executing</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="text-center">
+                <h4 class="text-muted" id="completed-count">0</h4>
+                <small>Completed</small>
+            </div>
+        </div>
+    </div>
+    <div class="mt-2">
+        <small class="text-muted">Next update in: <span id="next-update">5</span>s</small>
+    </div>
+</div>
+
+<!-- Add Attack Form -->
+<div class="add-attack-form">
+    <h5><i class="fas fa-plus"></i> New Attack</h5>
+    <form id="attack-form">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Attack ID</label>
+                    <input type="text" class="form-control" id="attack-id" placeholder="farm_001, attack_city_X..." required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Source Village</label>
+                    <select class="form-control" id="source-village" required>
+                        <option value="">Select a village...</option>
+                        {% for village_id in data.bot %}
+                        <option value="{{village_id}}">{{data.bot[village_id].public.name}} ({{village_id}})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Attack Type</label>
+                    <select class="form-control" id="attack-type">
+                        <option value="farm">Farm (Raid)</option>
+                        <option value="attack">Attack</option>
+                        <option value="support">Support</option>
+                        <option value="scout">Scout</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Arrival Date and Time</label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <input type="date" class="form-control" id="attack-date" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="time" class="form-control" id="attack-time" required>
+                        </div>
+                    </div>
+                    <small class="form-text text-muted">
+                        Shortcuts: 
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setToday()">Today</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setTomorrow()">Tomorrow</button>
+                    </small>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Target</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text">
+                                <input type="radio" name="target-type" value="coords" checked>
+                            </div>
+                        </div>
+                        <input type="number" class="form-control coords-input" id="target-x" placeholder="X" min="0" max="999">
+                        <input type="number" class="form-control coords-input" id="target-y" placeholder="Y" min="0" max="999">
+                        <div class="input-group-append">
+                            <span class="input-group-text">Coordinates</span>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group mt-2">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text">
+                                <input type="radio" name="target-type" value="village-id">
+                            </div>
+                        </div>
+                        <input type="text" class="form-control" id="target-village-id" placeholder="Target village ID">
+                        <div class="input-group-append">
+                            <span class="input-group-text">Village ID</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Troops</label>
+                    <div class="row" id="troops-section">
+                        <!-- Dynamically populated with troop inputs -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea class="form-control" id="attack-notes" rows="2" placeholder="Notes about this attack..."></textarea>
+                </div>
+
+                <div class="form-group form-check">
+                    <input type="checkbox" class="form-check-input" id="attack-enabled" checked>
+                    <label class="form-check-label" for="attack-enabled">
+                        Attack enabled
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 text-right">
+                <button type="button" class="btn btn-secondary" onclick="clearForm()">Clear</button>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Add Attack
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Attacks List -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5><i class="fas fa-list"></i> Scheduled Attacks</h5>
+            <div>
+                <button type="button" class="btn btn-warning btn-sm" onclick="cleanCache()" title="Clean orphaned attack cache">
+                    <i class="fas fa-broom mr-1"></i>Clean Cache
+                </button>
+                <button type="button" class="btn btn-info btn-sm" onclick="loadAttacksData()" title="Reload list">
+                    <i class="fas fa-sync-alt mr-1"></i>Update
+                </button>
+            </div>
+        </div>
+        <div id="attacks-container">
+            <!-- Dynamically populated with attack cards -->
+        </div>
+    </div>
+</div>
+
+<!-- Templates -->
+<div style="display: none;">
+    <div id="attack-card-template" class="attack-card">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center">
+                    <span class="status-indicator"></span>
+                    <h6 class="mb-0 attack-id"></h6>
+                    <span class="badge badge-info ml-2 attack-type"></span>
+                </div>
+                <div class="mt-2">
+                    <strong>Source:</strong> <span class="source-village"></span><br>
+                    <strong>Target:</strong> <span class="target-info"></span><br>
+                    <strong>Arrival:</strong> <span class="arrival-time"></span>
+                </div>
+                <div class="troops-display mt-2">
+                    <!-- Troop icons will be populated here -->
+                </div>
+                <div class="attack-notes mt-2 text-muted">
+                    <!-- Notes will be populated here -->
+                </div>
+            </div>
+            <div class="col-md-4 text-right">
+                <div class="time-display mb-2">
+                    <span class="time-until"></span>
+                </div>
+                <div class="btn-group-vertical">
+                    <button class="btn btn-sm btn-outline-primary edit-btn">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger delete-btn">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+let attacksData = [];
+let updateInterval;
+let nextUpdateCountdown;
+
+// Troop types for the interface
+const troopTypes = [
+    { id: 'spear', name: 'Spearmen', icon: 'spear' },
+    { id: 'sword', name: 'Swordsmen', icon: 'sword' },
+    { id: 'axe', name: 'Axemen', icon: 'axe' },
+    { id: 'archer', name: 'Archers', icon: 'archer' },
+    { id: 'spy', name: 'Scouts', icon: 'spy' },
+    { id: 'light', name: 'Light Cavalry', icon: 'light' },
+    { id: 'marcher', name: 'Mounted Archers', icon: 'marcher' },
+    { id: 'heavy', name: 'Heavy Cavalry', icon: 'heavy' },
+    { id: 'ram', name: 'Rams', icon: 'ram' },
+    { id: 'catapult', name: 'Catapults', icon: 'catapult' }
+];
+
+// Initialize page
+$(document).ready(function() {
+    initializeTroopsSection();
+    setTodayAsDefault();
+    loadAttacksData();
+    startUpdateLoop();
+    
+    // Form submission
+    $('#attack-form').submit(function(e) {
+        e.preventDefault();
+        addNewAttack();
+    });
+});
+
+function initializeTroopsSection() {
+    const troopsSection = $('#troops-section');
+    troopsSection.empty();
+    
+    troopTypes.forEach(troop => {
+        const col = $(`
+            <div class="col-md-6 mb-2">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">
+                            <img src="/static/images/unit_${troop.icon}.png" alt="${troop.name}" title="${troop.name}" style="width: 16px; height: 16px;">
+                        </span>
+                    </div>
+                    <input type="number" class="form-control" id="troop-${troop.id}" min="0" value="0" placeholder="0">
+                </div>
+            </div>
+        `);
+        troopsSection.append(col);
+    });
+}
+
+function setTodayAsDefault() {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    $('#attack-date').val(tomorrow.toISOString().split('T')[0]);
+    $('#attack-time').val('20:00');
+}
+
+function setToday() {
+    const today = new Date();
+    $('#attack-date').val(today.toISOString().split('T')[0]);
+}
+
+function setTomorrow() {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    $('#attack-date').val(tomorrow.toISOString().split('T')[0]);
+}
+
+function loadAttacksData() {
+    $.get('/api/attacks/list', function(data) {
+        attacksData = data.attacks || [];
+        updateAttacksDisplay();
+    }).fail(function() {
+        // Fallback to existing data structure
+        console.log('Using fallback attack loading method');
+        loadFallbackAttacksData();
+    });
+}
+
+function loadFallbackAttacksData() {
+    // Load from existing scheduled_attacks.json format
+    attacksData = []; // Placeholder for existing data
+    updateAttacksDisplay();
+}
+
+function updateAttacksDisplay() {
+    const container = $('#attacks-container');
+    container.empty();
+    
+    if (attacksData.length === 0) {
+        container.html(`
+            <div class="text-center py-5">
+                <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No scheduled attacks</h5>
+                <p class="text-muted">Use the form above to add new attacks</p>
+            </div>
+        `);
+        return;
+    }
+    
+    // Sort attacks by arrival time
+    const sortedAttacks = [...attacksData].sort((a, b) => a.arrival_timestamp - b.arrival_timestamp);
+    
+    sortedAttacks.forEach(attack => {
+        const card = createAttackCard(attack);
+        container.append(card);
+    });
+    
+    updateCounters();
+}
+
+function createAttackCard(attack) {
+    const template = $('#attack-card-template').clone();
+    template.removeAttr('id').show();
+    
+    const now = Date.now() / 1000;
+    const timeUntil = attack.arrival_timestamp - now;
+    
+    // Determine status
+    let status, statusClass;
+    if (timeUntil < 0) {
+        status = 'completed';
+        statusClass = 'completed';
+    } else if (timeUntil <= 300) { // 5 minutes
+        status = 'executing';
+        statusClass = 'executing';
+    } else if (timeUntil <= 600) { // 10 minutes
+        status = 'imminent';
+        statusClass = 'imminent';
+    } else {
+        status = 'scheduled';
+        statusClass = 'scheduled';
+    }
+    
+    template.addClass(statusClass);
+    template.find('.status-indicator').addClass(`status-${status}`);
+    
+    // ID do ataque com indicador se já foi agendado
+    let attackIdHtml = attack.id || 'N/A';
+    if (attack.scheduled) {
+        attackIdHtml += ' <i class="fas fa-check-circle text-success" title="Already scheduled in Hunter"></i>';
+    }
+    template.find('.attack-id').html(attackIdHtml);
+    template.find('.attack-type').text(attack.type || 'attack').addClass(getTypeClass(attack.type));
+    template.find('.source-village').text(attack.source_village || attack.source || 'N/A');
+    
+    // Target info
+    let targetInfo = '';
+    if (attack.target_coordinates) {
+        targetInfo = `(${attack.target_coordinates[0]}|${attack.target_coordinates[1]})`;
+    } else if (attack.target_coords) {
+        targetInfo = `(${attack.target_coords[0]}|${attack.target_coords[1]})`;
+    } else if (attack.target_village_id || attack.target) {
+        targetInfo = attack.target_village_id || attack.target;
+    }
+    template.find('.target-info').text(targetInfo);
+    
+    // Arrival time
+    const arrivalDate = new Date(attack.arrival_timestamp * 1000);
+    template.find('.arrival-time').text(arrivalDate.toLocaleString('pt-BR'));
+    
+    // Time until
+    template.find('.time-until').text(formatTimeUntil(timeUntil));
+    
+    // Troops
+    const troopsDisplay = template.find('.troops-display');
+    if (attack.troops) {
+        Object.entries(attack.troops).forEach(([unit, amount]) => {
+            if (amount > 0) {
+                troopsDisplay.append(`
+                    <span class="mr-2">
+                        <img src="/static/images/unit_${unit}.png" alt="${unit}" title="${unit}">
+                        <strong>${amount}</strong>
+                    </span>
+                `);
+            }
+        });
+    }
+    
+    // Notes
+    if (attack.notes) {
+        template.find('.attack-notes').text(attack.notes).show();
+    } else {
+        template.find('.attack-notes').hide();
+    }
+    
+    // Button events - disable if already scheduled
+    if (attack.scheduled) {
+        template.find('.edit-btn').prop('disabled', true).attr('title', 'Attack already scheduled in Hunter');
+        template.find('.delete-btn').prop('disabled', true).attr('title', 'Attack already scheduled in Hunter');
+    } else {
+        template.find('.edit-btn').click(() => editAttack(attack));
+        template.find('.delete-btn').click(() => deleteAttack(attack.id));
+    }
+    
+    return template;
+}
+
+function getTypeClass(type) {
+    switch(type) {
+        case 'farm': return 'badge-success';
+        case 'attack': return 'badge-danger';
+        case 'support': return 'badge-info';
+        case 'scout': return 'badge-warning';
+        default: return 'badge-secondary';
+    }
+}
+
+function formatTimeUntil(seconds) {
+    if (seconds < 0) return 'COMPLETED';
+    
+    if (seconds < 60) {
+        return `${Math.floor(seconds)}s`;
+    } else if (seconds < 3600) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes}m ${secs}s`;
+    } else {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        return `${hours}h ${minutes}m`;
+    }
+}
+
+function updateCounters() {
+    const now = Date.now() / 1000;
+    let scheduled = 0, imminent = 0, executing = 0, completed = 0;
+    
+    attacksData.forEach(attack => {
+        const timeUntil = attack.arrival_timestamp - now;
+        
+        if (timeUntil < 0) {
+            completed++;
+        } else if (timeUntil <= 300) {
+            executing++;
+        } else if (timeUntil <= 600) {
+            imminent++;
+        } else {
+            scheduled++;
+        }
+    });
+    
+    $('#scheduled-count').text(scheduled);
+    $('#imminent-count').text(imminent);
+    $('#executing-count').text(executing);
+    $('#completed-count').text(completed);
+}
+
+function addNewAttack() {
+    const formData = collectFormData();
+    
+    if (!validateFormData(formData)) {
+        return;
+    }
+    
+    // Mostrar indicador de carregamento
+    const submitBtn = $('#attack-form button[type="submit"]');
+    const originalText = submitBtn.html();
+    submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Adding...').prop('disabled', true);
+    
+    // Send to server
+    $.ajax({
+        url: '/api/attacks/add',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        success: function(response) {
+            if (response.success) {
+                showSuccess('Attack added successfully!');
+                clearForm();
+                loadAttacksData();
+            } else {
+                showError(response.error || 'Error adding attack');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            console.error('Response:', xhr.responseText);
+            try {
+                const response = JSON.parse(xhr.responseText);
+                showError(response.error || 'Server communication error');
+            } catch (e) {
+                showError('Server communication error');
+            }
+        },
+        complete: function() {
+            submitBtn.html(originalText).prop('disabled', false);
+        }
+    });
+}
+
+function scheduleAttacks() {
+    const scheduleBtn = $('button:contains("Schedule Attacks")');
+    const originalText = scheduleBtn.html();
+    scheduleBtn.html('<i class="fas fa-spinner fa-spin"></i> Scheduling...').prop('disabled', true);
+    
+    $.ajax({
+        url: '/api/attacks/schedule',
+        method: 'POST',
+        success: function(response) {
+            if (response.success) {
+                showSuccess(response.message);
+                loadAttacksData(); // Reload to show scheduled attacks
+            } else {
+                showError(response.error || 'Error scheduling attacks');
+            }
+        },
+        error: function() {
+            showError('Server communication error');
+        },
+        complete: function() {
+            scheduleBtn.html(originalText).prop('disabled', false);
+        }
+    });
+}
+
+function collectFormData() {
+    const troops = {};
+    let hasTroops = false;
+    
+    troopTypes.forEach(troop => {
+        const amount = parseInt($(`#troop-${troop.id}`).val()) || 0;
+        if (amount > 0) {
+            troops[troop.id] = amount;
+            hasTroops = true;
+        }
+    });
+    
+    if (!hasTroops) {
+        showError('Add at least 1 troop with quantity > 0');
+        return null;
+    }
+    
+    const dateStr = $('#attack-date').val();
+    const timeStr = $('#attack-time').val();
+    
+    if (!dateStr || !timeStr) {
+        showError('Date and time are required');
+        return null;
+    }
+    
+    // Check if it's today or tomorrow to use optimized format
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayStr = today.toISOString().split('T')[0];
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
+    let arrivalTime;
+    if (dateStr === todayStr) {
+        arrivalTime = `hoje ${timeStr}:00`;
+    } else if (dateStr === tomorrowStr) {
+        arrivalTime = `amanhã ${timeStr}:00`;
+    } else {
+        arrivalTime = `${dateStr.split('-').reverse().join('/')} ${timeStr}:00`;
+    }
+    
+    const targetType = $('input[name="target-type"]:checked').val();
+    const formData = {
+        id: $('#attack-id').val().trim(),
+        source_village: $('#source-village').val(),
+        type: $('#attack-type').val(),
+        arrival_time: arrivalTime,
+        troops: troops,
+        notes: $('#attack-notes').val().trim(),
+        enabled: $('#attack-enabled').is(':checked')
+    };
+    
+    if (targetType === 'coords') {
+        const x = parseInt($('#target-x').val());
+        const y = parseInt($('#target-y').val());
+        if (!isNaN(x) && !isNaN(y) && x >= 0 && y >= 0 && x <= 999 && y <= 999) {
+            formData.target_coordinates = [x, y];
+        } else {
+            showError('Invalid coordinates (0-999)');
+            return null;
+        }
+    } else {
+        const villageId = $('#target-village-id').val().trim();
+        if (villageId) {
+            formData.target_village_id = villageId;
+        } else {
+            showError('Village ID is required');
+            return null;
+        }
+    }
+    
+    return formData;
+}
+
+function validateFormData(data) {
+    if (!data) {
+        return false;
+    }
+    
+    if (!data.id) {
+        showError('Attack ID is required');
+        $('#attack-id').focus();
+        return false;
+    }
+    
+    if (!data.source_village) {
+        showError('Source village is required');
+        $('#source-village').focus();
+        return false;
+    }
+    
+    if (!data.target_coordinates && !data.target_village_id) {
+        showError('Define target (coordinates or village ID)');
+        return false;
+    }
+    
+    if (!data.troops || Object.keys(data.troops).length === 0) {
+        showError('Add at least 1 troop');
+        return false;
+    }
+    
+    // Validate that the date is not in the past
+    try {
+        const [datePart, timePart] = data.arrival_time.split(' ');
+        const [day, month, year] = datePart.split('/');
+        const [hour, minute, second] = timePart.split(':');
+        
+        const arrivalDate = new Date(year, month - 1, day, hour, minute, second);
+        const now = new Date();
+        
+        if (arrivalDate <= now) {
+            showError('Arrival date must be in the future');
+            return false;
+        }
+    } catch (e) {
+        showError('Invalid date/time format');
+        return false;
+    }
+    
+    return true;
+}
+
+function clearForm() {
+    $('#attack-form')[0].reset();
+    troopTypes.forEach(troop => {
+        $(`#troop-${troop.id}`).val(0);
+    });
+    setTodayAsDefault();
+    $('input[name="target-type"][value="coords"]').prop('checked', true);
+}
+
+function editAttack(attack) {
+    // Populate form with attack data
+    $('#attack-id').val(attack.id);
+    $('#source-village').val(attack.source_village);
+    $('#attack-type').val(attack.type);
+    $('#attack-notes').val(attack.notes || '');
+    $('#attack-enabled').prop('checked', attack.enabled !== false);
+    
+    // Set date/time
+    const date = new Date(attack.arrival_timestamp * 1000);
+    $('#attack-date').val(date.toISOString().split('T')[0]);
+    $('#attack-time').val(date.toTimeString().slice(0, 5));
+    
+    // Set target
+    if (attack.target_coordinates) {
+        $('input[name="target-type"][value="coords"]').prop('checked', true);
+        $('#target-x').val(attack.target_coordinates[0]);
+        $('#target-y').val(attack.target_coordinates[1]);
+    } else if (attack.target_village_id) {
+        $('input[name="target-type"][value="village-id"]').prop('checked', true);
+        $('#target-village-id').val(attack.target_village_id);
+    }
+    
+    // Set troops
+    troopTypes.forEach(troop => {
+        const amount = attack.troops[troop.id] || 0;
+        $(`#troop-${troop.id}`).val(amount);
+    });
+    
+    // Scroll to form
+    $('html, body').animate({
+        scrollTop: $('.add-attack-form').offset().top - 20
+    }, 500);
+}
+
+function deleteAttack(attackId) {
+    if (!attackId) {
+        showError('Invalid attack ID');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to remove attack "${attackId}"?`)) {
+        return;
+    }
+    
+    $.ajax({
+        url: `/api/attacks/delete/${encodeURIComponent(attackId)}`,
+        method: 'DELETE',
+        success: function(response) {
+            if (response.success) {
+                showSuccess('Attack removed successfully!');
+                loadAttacksData();
+            } else {
+                showError(response.error || 'Error removing attack');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            console.error('Response:', xhr.responseText);
+            try {
+                const response = JSON.parse(xhr.responseText);
+                showError(response.error || 'Server communication error');
+            } catch (e) {
+                showError('Server communication error');
+            }
+        }
+    });
+}
+
+function refreshData() {
+    loadAttacksData();
+    showSuccess('Data updated!', 2000);
+}
+
+function startUpdateLoop() {
+    // Update display every 5 seconds
+    updateInterval = setInterval(() => {
+        updateAttacksDisplay();
+    }, 5000);
+    
+    // Countdown timer
+    let countdown = 5;
+    nextUpdateCountdown = setInterval(() => {
+        $('#next-update').text(countdown);
+        countdown--;
+        if (countdown < 0) {
+            countdown = 5;
+        }
+    }, 1000);
+}
+
+// Clean orphaned attacks from cache
+function cleanCache() {
+    if (!confirm('Clean cache and remove old attacks? This will:\n- Remove orphaned attacks from Hunter cache\n- Remove executed attacks from attacks.json\n- Remove attacks older than 1 hour')) {
+        return;
+    }
+    
+    showSuccess('Cleaning cache and old attacks...', 2000);
+    
+    fetch('/api/attacks/clean-cache', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const cacheCount = data.removed_count || 0;
+            const attacksCount = data.attacks_cleaned || 0;
+            const validCount = data.valid_attacks || 0;
+            showSuccess(`${data.message} (Cache: ${cacheCount}, Attacks: ${attacksCount}, Valid: ${validCount})`);
+            loadAttacksData(); // Reload list
+        } else {
+            showError('Error cleaning cache: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('Connection error while cleaning cache');
+    });
+}
+
+function showSuccess(message, duration = 3000) {
+    const alert = $(`
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `);
+    
+    $('body').prepend(alert);
+    setTimeout(() => alert.fadeOut(), duration);
+}
+
+function showError(message, duration = 5000) {
+    const alert = $(`
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `);
+    
+    $('body').prepend(alert);
+    setTimeout(() => alert.fadeOut(), duration);
+}
+
+// Cleanup on page unload
+$(window).on('beforeunload', function() {
+    if (updateInterval) clearInterval(updateInterval);
+    if (nextUpdateCountdown) clearInterval(nextUpdateCountdown);
+});
+</script>
+{% endblock %}

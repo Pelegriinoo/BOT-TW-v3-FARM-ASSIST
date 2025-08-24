@@ -1,0 +1,124 @@
+{
+  "build": {
+    "name": "tw_bot",
+    "version": "2.0",
+    "author": "Pelegriinoo"
+  },
+  "server": {
+    "server": "",
+    "endpoint": "",
+    "server_on_twstats": true
+  },
+  "reporting": {
+    "enabled": false,
+    "connection_string": "file://cache/logs/twb_{ts}.log"
+  },
+  "notifications": {
+    "enabled": true,
+    "channel_id": "-1002859455414",
+    "token": "8414646682:AAHXPi4t7tdG1E082puokPqhcWCadiq6Flo",
+    "bot_name": "TWB {server} - {NOME_DA_CONTA}",
+    "message_delay_seconds": 7200
+  },
+  "bot": {
+    "active_hours": "8-23",
+    "delay_factor": 1.5,
+    "active_delay": 300,
+    "inactive_still_active": true,
+    "inactive_delay": 4000,
+    "add_new_villages": true,
+    "village_name_template": "{num} * CircuSS *",
+    "village_name_number_length": 3,
+    "auto_set_village_names": false,
+    "user_agent": "",
+    "check_update": false
+  },
+  "building": {
+    "manage_buildings": true,
+    "default": "pelegrino",
+    "max_lookahead": 2,
+    "max_queued_items": 2
+  },
+  "units": {
+    "recruit": true,
+    "upgrade": true,
+    "default": "basic",
+    "batch_size": 15,
+    "manage_defence": false,
+    "remove_manual_queued": false,
+    "randomize_unit_queue": true
+  },
+  "village_template": {
+    "building": "pelegrino",
+    "units": "basic",
+    "managed": true,
+    "scout_first": true,
+    "additional_farms": [],
+    "prioritize_building": true,
+    "prioritize_snob": false,
+    "trade_for_premium": false,
+    "gather_enabled": true,
+    "gather_selection": 4,
+    "advanced_gather": true,
+    "auto_unlock_scavenge": true,
+    "min_resources_after_unlock": 0,
+    "snobs": 0,
+    "evacuate_fragile_units_on_attack": false,
+    "support_others": false,
+    "support_others_factor": 0.25,
+    "support_others_max_villages": 2,
+    "request_support_on_attack": false
+  },
+  "farms": {
+    "farm": true,
+    "use_assistant": false,
+    "min_points": 0,
+    "max_points": 3000,
+    "find_player_owned": false,
+    "search_radius": 100,
+    "default_away_time": 3500,
+    "full_loot_away_time": 1800,
+    "low_loot_away_time": 6500,
+    "max_farms": 30,
+    "attack_higher_points": true,
+    "force_scout_if_available": true,
+    "forced_peace_times": [],
+    "farm_scout_amount": 5,
+    
+    "assistant_settings": {
+      "human_simulation": true,
+      "base_delay": 2.5,
+      "randomization_factor": 1.8,
+      "break_frequency": 0.05,
+      "pattern_detection": true
+    }
+  },
+  "market": {
+    "auto_trade": true,
+    "max_trade_duration": 8,
+    "auto_remove": true,
+    "trade_multiplier": true,
+    "trade_multiplier_value": 1.0,
+    "trade_max_per_hour": 2
+  },
+  "world": {
+    "knight_enabled": true,
+    "flags_enabled": true,
+    "quests_enabled": true,
+    "trade_for_premium": false,
+    "archers_enabled": true,
+    "building_destruction_enabled": true,
+    "boosters_enabled": true
+  },
+    "growth_snapshots": {
+    "date": "2025-08-20",
+    "snapshots_taken": [
+      "2025-08-20T08:15:30",
+      "2025-08-20T14:45:12"
+    ],
+    "count": 2
+  },
+  "villages": {
+
+  }
+}
