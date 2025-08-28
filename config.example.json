@@ -27,6 +27,8 @@
     "inactive_still_active": true,
     "inactive_delay": 4000,
     "add_new_villages": true,
+    "remove_lost_villages": true,          
+    "auto_remove_lost_villages": false,
     "village_name_template": "{num} * CircuSS *",
     "village_name_number_length": 3,
     "auto_set_village_names": false,

@@ -70,8 +70,17 @@ class AttackManager:
         Run the farming logic
         """
         if not self.troopmanager.can_attack or self.troopmanager.troops == {}:
-            # Disable farming is disabled in config or no troops available
             return False
+        
+        # CORREÇÃO: Verificar map antes de continuar
+        if not self.map:
+            self.logger.error("Map object is None, cannot run farm attacks")
+            return False
+            
+        if not hasattr(self.map, 'villages') or not self.map.villages:
+            self.logger.warning("Map has no villages data, skipping farm cycle")
+            return False
+        
         self.get_targets()
         ignored = []
         # Limits the amount of villages that are farmed from the current village
@@ -148,12 +157,24 @@ class AttackManager:
         """
         Gets all possible farming targets based on distance
         """
+        # CORREÇÃO: Verificar se map existe e tem villages
+        if not self.map:
+            self.logger.error("Map object is None, cannot get farm targets")
+            self.targets = []
+            return []
+        
+        if not hasattr(self.map, 'villages') or not self.map.villages:
+            self.logger.error("Map has no villages data, cannot get farm targets")
+            self.targets = []
+            return []
+        
         output = []
         my_village = (
             self.map.villages[self.village_id]
             if self.village_id in self.map.villages
             else None
         )
+        
         for vid in self.map.villages:
             village = self.map.villages[vid]
             if village["owner"] != "0" and vid not in self.extra_farm:
@@ -341,6 +362,11 @@ class AttackManager:
         """
         Send a TW attack
         """
+        # CORREÇÃO: Verificar se map e map_pos existem antes de usar
+        if not self.map or not hasattr(self.map, 'map_pos') or vid not in self.map.map_pos:
+            self.logger.error("Cannot attack %s - village not found in map data", vid)
+            return False
+        
         url = f"game.php?village={self.village_id}&screen=place&target={vid}"
         pre_attack = self.wrapper.get_url(url)
         pre_data = {}
@@ -351,9 +377,6 @@ class AttackManager:
             pre_data.update(troops)
         else:
             pre_data.update(self.troopmanager.troops)
-
-        if vid not in self.map.map_pos:
-            return False
 
         x, y = self.map.map_pos[vid]
         post_data = {"x": x, "y": y, "target_type": "coord", "attack": "Aanvallen"}

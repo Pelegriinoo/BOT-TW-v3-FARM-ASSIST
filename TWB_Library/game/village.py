@@ -431,22 +431,48 @@ class Village:
         self.logger.debug("Current resources: %s", str(self.resman.actual))
         self.logger.debug("Requested resources: %s", str(self.resman.requested))
 
-    def set_farm_options(self):
+    def run_farming(self):
         """
-        Sets various options for farming management
-        MODIFICADO: Suporte ao assistente de farm
+        Run all things farming related
+        CORRIGIDO: Removido conflito com Farm Assistant
         """
-        # NOVA LÓGICA: Verifica se deve usar assistente
-        use_assistant = self.get_config(
-            section="farms", parameter="use_assistant", default=False
-        )
+        if not self.get_config(section="farms", parameter="farm", default=False):
+            return False
         
-        self.logger.debug(f"🔍 Farm config: use_assistant={use_assistant}")
-        
-        if use_assistant:
-            self.logger.info("🎯 Configurando Farm Assistant")
+        if self.forced_peace or not self.units.can_attack:
+            return False
             
-            # Cria farm assistant
+        # Log básico para debug
+        if self.def_man and self.def_man.under_attack:
+            self.logger.info("Village under attack, skipping farming")
+            return False
+
+        use_assistant = self.get_config(section="farms", parameter="use_assistant", default=False)
+        self.logger.debug("Farm method: %s", "Assistant" if use_assistant else "Traditional")
+        
+        # SEMPRE inicializar o mapa (necessário para ambos os métodos)
+        if not self.area:
+            self.area = Map(wrapper=self.wrapper, village_id=self.village_id)
+        
+        # Carregar dados do mapa
+        try:
+            map_result = self.area.get_map()
+            if not map_result or not self.area.villages:
+                self.logger.error("Failed to load map data for farming")
+                return False
+            
+            self.logger.info("%d villages from map cache, (your location: %s)", 
+                            len(self.area.villages),
+                            ":".join([str(x) for x in self.area.my_location]) if self.area.my_location else "Unknown")
+        except Exception as e:
+            self.logger.error("Error loading map: %s", str(e))
+            return False
+        
+        # MÉTODO ASSISTENTE (se habilitado e disponível)
+        if use_assistant:
+            self.logger.info("Attempting to use Farm Assistant")
+            
+            # Criar Farm Assistant se não existir
             if not self.farm_assistant:
                 try:
                     self.farm_assistant = FarmAssistantManager(
@@ -455,7 +481,7 @@ class Village:
                         troopmanager=self.units
                     )
                     
-                    # Configurações do assistente
+                    # Configurar parâmetros
                     self.farm_assistant.farm_radius = self.get_config(
                         section="farms", parameter="search_radius", default=50
                     )
@@ -463,27 +489,65 @@ class Village:
                         section="farms", parameter="max_farms", default=15
                     )
                     
-                    self.logger.info("✅ Farm Assistant criado com sucesso")
-                    
-                    # Valida acesso ao assistente
+                    # Validar acesso
                     if not self.farm_assistant.validate_assistant_access():
-                        self.logger.error("❌ Assistente não acessível - usando método tradicional")
+                        self.logger.warning("Farm Assistant not accessible, falling back to traditional method")
                         self.farm_assistant = None
                         use_assistant = False
                     else:
-                        self.logger.info("✅ Farm Assistant validado e pronto para uso")
+                        self.logger.info("Farm Assistant created and validated successfully")
                         
                 except Exception as e:
-                    self.logger.error(f"❌ Erro ao criar Farm Assistant: {e}")
+                    self.logger.error("Failed to create Farm Assistant: %s", str(e))
                     self.farm_assistant = None
                     use_assistant = False
-            else:
-                self.logger.debug("🔄 Farm Assistant já existe, reutilizando")
+            
+            # Executar Farm Assistant se disponível
+            if use_assistant and self.farm_assistant:
+                try:
+                    result = self.farm_assistant.run_assistant_farming()
+                    self.logger.info("Farm assistant completed with result: %s", result)
+                    return result
+                except Exception as e:
+                    self.logger.error("Farm assistant failed: %s", str(e))
+                    self.logger.info("Falling back to traditional farming method")
+                    use_assistant = False
         
-        # Método tradicional como fallback ou quando não usa assistente
+        # MÉTODO TRADICIONAL (sempre como fallback ou método principal)
         if not use_assistant:
-            self.logger.info("⚙️ Configurando método de farm tradicional")
+            self.logger.info("Running traditional farming method")
+            
+            # Configurar scout
+            self.units.can_scout = self.get_config(
+                section="farms", parameter="force_scout_if_available", default=True
+            )
+            
+            # Criar AttackManager se não existir
             if not self.attack:
+                self.logger.debug("Creating AttackManager")
+                try:
+                    self.attack = AttackManager(
+                        wrapper=self.wrapper,
+                        village_id=self.village_id,
+                        troopmanager=self.units,
+                        map=self.area,
+                    )
+                    self.attack.repman = self.rep_man
+                    
+                    # Verificar se foi criado corretamente
+                    if not self.attack.map or not self.attack.map.villages:
+                        self.logger.error("AttackManager created but map is invalid")
+                        return False
+                        
+                    self.logger.debug("AttackManager created successfully")
+                    
+                except Exception as e:
+                    self.logger.error("Failed to create AttackManager: %s", str(e))
+                    return False
+            
+            # Verificar se AttackManager existente ainda é válido
+            elif not self.attack.map or not hasattr(self.attack.map, 'villages') or not self.attack.map.villages:
+                self.logger.warning("Existing AttackManager has invalid map, recreating")
                 self.attack = AttackManager(
                     wrapper=self.wrapper,
                     village_id=self.village_id,
@@ -491,8 +555,34 @@ class Village:
                     map=self.area,
                 )
                 self.attack.repman = self.rep_man
-            
-            # Configurações tradicionais existentes
+
+            # Configurar forced peace
+            if self.forced_peace_today:
+                self.logger.info("Forced peace time coming up today")
+                self.attack.forced_peace_time = self.forced_peace_today_start
+
+            # Configurar template de farm
+            if self.current_unit_entry:
+                self.attack.template = self.current_unit_entry["farm"]
+            else:
+                self.attack.template = TemplateManager.get_template(
+                    template=self.get_village_config(
+                        self.village_id, "units", self.config["units"]["default"]
+                    ),
+                    farm_type=True,
+                )
+
+            if not self.attack.template:
+                self.logger.error("Unable to load farm template")
+                return False
+
+            # Configurar parâmetros de farm
+            self.attack.extra_farm = self.get_village_config(
+                self.village_id, parameter="additional_farms", default=[]
+            )
+            self.attack.max_farms = self.get_config(
+                section="farms", parameter="max_farms", default=25
+            )
             self.attack.target_high_points = self.get_config(
                 section="farms", parameter="attack_higher_points", default=False
             )
@@ -517,89 +607,15 @@ class Village:
             self.attack.scout_farm_amount = self.get_config(
                 section="farms", parameter="farm_scout_amount", default=5
             )
-            if self.current_unit_entry:
-                self.attack.template = self.current_unit_entry["farm"]
 
-    def run_farming(self):
-        """
-        Runs the farming logic
-        MODIFICADO: Suporte ao assistente de farm
-        """
-        # Log detalhado para debug
-        farm_enabled = self.get_config(section="farms", parameter="farm", default=False)
-        
-        self.logger.info(f"🔍 FARM DEBUG:")
-        self.logger.info(f"   forced_peace: {self.forced_peace}")
-        self.logger.info(f"   can_attack: {self.units.can_attack}")
-        self.logger.info(f"   farm enabled: {farm_enabled}")
-        self.logger.info(f"   under_attack: {getattr(self.def_man, 'under_attack', 'N/A')}")
-        
-        if not self.forced_peace and self.units.can_attack:
-            use_assistant = self.get_config(
-                section="farms", parameter="use_assistant", default=False
-            )
-            
-            self.logger.info(f"🔍 use_assistant={use_assistant}, farm_assistant exists={self.farm_assistant is not None}")
-            
-            # Configura as opções de farm sempre (necessário para ambos os métodos)
-            self.set_farm_options()
-            
-            # MÉTODO ASSISTENTE (NOVO)
-            if use_assistant and self.farm_assistant:
-                self.logger.info("🚀 Executando farm via assistente")
-                
-                try:
-                    result = self.farm_assistant.run_assistant_farming()
-                    self.logger.info(f"✅ Farm assistant retornou: {result}")
-                    return result
-                except Exception as e:
-                    self.logger.error(f"❌ Erro no farm assistant: {e}")
-                    self.logger.info("🔄 Voltando para método tradicional")
-                    # Fallback para método tradicional
-                    use_assistant = False
-            elif use_assistant and not self.farm_assistant:
-                self.logger.warning("⚠️ Farm Assistant configurado mas não criado - usando método tradicional")
-            
-            # MÉTODO TRADICIONAL (EXISTENTE)
-            if not use_assistant:
-                self.logger.info("⚙️ Executando farm tradicional")
-                
-                if not self.area:
-                    self.area = Map(wrapper=self.wrapper, village_id=self.village_id)
-                self.area.get_map()
-                if self.area.villages:
-                    self.units.can_scout = self.get_config(
-                        section="farms", parameter="force_scout_if_available", default=True
-                    )
-                    self.logger.info(
-                        "%d villages from map cache, (your location: %s)",
-                            len(self.area.villages),
-                            ":".join([str(x) for x in self.area.my_location])
-                    )
-                    if not self.attack:
-                        self.attack = AttackManager(
-                            wrapper=self.wrapper,
-                            village_id=self.village_id,
-                            troopmanager=self.units,
-                            map=self.area,
-                        )
-                        self.attack.repman = self.rep_man
+            # Verificação final antes de executar
+            if not self.attack.map or not self.attack.map.villages:
+                self.logger.error("Final check failed - AttackManager map is invalid")
+                return False
 
-                    if self.forced_peace_today:
-                        self.logger.info("Forced peace time coming up today!")
-                        self.attack.forced_peace_time = self.forced_peace_today_start
-
-                    if (
-                            self.get_config(section="farms", parameter="farm", default=False)
-                            and not self.def_man.under_attack
-                    ):
-                        self.attack.extra_farm = self.get_village_config(
-                        self.village_id, parameter="additional_farms", default=[]
-                    )
-                    self.attack.max_farms = self.get_config(
-                        section="farms", parameter="max_farms", default=25
-                    )
-                    return self.attack.run()
+            # Executar farming
+            self.logger.debug("Starting traditional farm attack run")
+            return self.attack.run()
         
         return False
 
@@ -624,7 +640,7 @@ class Village:
 
             # Log para debug da nova funcionalidade
             if auto_unlock:
-                self.logger.info(f"Auto-unlock scavenge enabled, min resources: {min_resources_after_unlock}")
+                self.logger.info("Auto-unlock scavenge enabled, min resources: %d", min_resources_after_unlock)
 
             # Chamar gather com as novas configurações
             self.units.gather(
@@ -764,7 +780,7 @@ class Village:
                         )
                         
                         if success:
-                            self.logger.info("Hunter: Attacks executed successfully!")
+                            self.logger.info("Hunter: Attacks executed successfully")
                             
                             # Mark as executed in cache
                             for attack in self.hunter.schedule[arrival_time]:
@@ -775,7 +791,7 @@ class Village:
                             hunter_data["hunter_schedule"][str(arrival_time)] = self.hunter.schedule[arrival_time]
                             FileManager.save_json_file(hunter_data, "cache/hunter/scheduled_attacks.json")
                         else:
-                            self.logger.error("Hunter: Failed to execute attacks!")
+                            self.logger.error("Hunter: Failed to execute attacks")
                                 
                     else:
                         self.logger.warning("Hunter: Attack cancelled due to insufficient troops")

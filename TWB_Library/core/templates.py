@@ -20,7 +20,7 @@ class TemplateManager:
         library_root = Path(os.path.dirname(__file__)).parent
         template_path = library_root / "templates" / category / f"{template}.txt"
         
-        print(f"[DEBUG] Trying to load template: {template_path}")
+        #print(f"[DEBUG] Trying to load template: {template_path}")
         
         if not template_path.exists():
             print(f"[ERROR] Template file not found: {template_path}")

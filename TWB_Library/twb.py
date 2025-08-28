@@ -219,17 +219,43 @@ class TWB:
     def get_overview(self, config):
         """
         Gets the overview page to automatically detect world options and owned villages
+        CORRIGIDO: Remove vilas perdidas automaticamente
         """
         overview_page = OverviewPage(self.wrapper)
         self.found_villages = Extractor.village_ids_from_overview(overview_page.result_get.text)
+        
+        config_changed = False
+        
+        # Adicionar novas vilas conquistadas
         if config["bot"].get("add_new_villages", False):
             for found_vid in self.found_villages:
                 if found_vid not in config["villages"]:
-                    print(
-                        f"Village {found_vid} was found but no config entry was found. Adding automatically"
-                    )
+                    print(f"Village {found_vid} was found but no config entry was found. Adding automatically")
                     config = self.add_village(village_id=found_vid)
-
+                    config_changed = True
+        
+        # Detectar e remover vilas perdidas
+        if config["bot"].get("remove_lost_villages", True):
+            lost_villages = []
+            for village_id in config["villages"]:
+                if village_id not in self.found_villages:
+                    lost_villages.append(village_id)
+            
+            if lost_villages:
+                logging.getLogger("TWB").warning("Lost villages detected: %s", lost_villages)
+                
+                if config["bot"].get("auto_remove_lost_villages", False):
+                    config = self.remove_lost_villages(lost_villages, config)
+                    config_changed = True
+                else:
+                    logging.getLogger("TWB").info("Lost villages detected but auto-removal disabled")
+                    logging.getLogger("TWB").info("Enable 'auto_remove_lost_villages' for automatic cleanup")
+        
+        # Salvar config se houve mudanças
+        if config_changed:
+            FileManager.save_json_file(config, "config.json")
+            print("Deployed new configuration file")
+        
         return overview_page, config
 
     def add_village(self, village_id, template=None):
@@ -249,6 +275,39 @@ class TWB:
         FileManager.save_json_file(original, "config.json")
         print("Deployed new configuration file")
         return original
+
+    def remove_lost_villages(self, lost_village_ids, config):
+        """
+        Remove vilas perdidas do config automaticamente e limpa arquivos managed.
+        """
+        logger = logging.getLogger("TWB")
+        logger.info("Removing %d lost villages from config", len(lost_village_ids))
+        
+        # Backup antes de modificar
+        import time
+        backup_name = f"config_backup_lost_villages_{int(time.time())}.json"
+        FileManager.copy_file("config.json", backup_name)
+        
+        original_count = len(config["villages"])
+        
+        # Remove vilas perdidas e arquivos managed
+        for village_id in lost_village_ids:
+            if village_id in config["villages"]:
+                removed_village = config["villages"].pop(village_id)
+                logger.info("Village %s removed from config (managed: %s)", 
+                        village_id, removed_village.get('managed', 'N/A'))
+            # Remover arquivo managed correspondente
+            managed_path = f"cache/managed/{village_id}.json"
+            if FileManager.path_exists(managed_path):
+                FileManager.remove_file(managed_path)
+                logger.info(f"Arquivo {managed_path} removido.")
+        
+        new_count = len(config["villages"])
+        logger.info("Villages in config: %d -> %d (%d removed)", 
+                original_count, new_count, original_count - new_count)
+        logger.info("Backup saved as: %s", backup_name)
+        
+        return config
 
     @staticmethod
     def get_world_options(overview_page: OverviewPage, config):
